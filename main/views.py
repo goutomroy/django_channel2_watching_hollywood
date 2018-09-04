@@ -11,8 +11,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from main.Serializers import MovieSerializer, WatchlistSerializer
 from main.models import UserProfile, Movie, Watchlist
-from watching_hollywood import app_static_methods
-from watching_hollywood.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, MSG_SOMETHING_WENT_WRONG, \
+from main import app_static_methods
+from main.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, MSG_SOMETHING_WENT_WRONG, \
     MSG_NOT_ALL_KEYS
 
 

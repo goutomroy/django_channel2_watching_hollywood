@@ -4,7 +4,7 @@ from django.core.cache import cache
 from watching_hollywood.settings import CRED
 from main.models import Movie
 from watching_hollywood import celery_app
-from watching_hollywood.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, TMDB_BASE_URL
+from main.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, TMDB_BASE_URL
 
 
 class BaseTask(celery_app.Task):

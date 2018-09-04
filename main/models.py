@@ -1,7 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.contrib.auth.models import User
-from watching_hollywood.app_static_variables import MEDIUM_CHAR_LENGTH
+from main.app_static_variables import MEDIUM_CHAR_LENGTH
 
 
 class UserProfile(models.Model):
