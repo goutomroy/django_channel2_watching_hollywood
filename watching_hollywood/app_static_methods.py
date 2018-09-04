@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 import random
 import string
 
+
+@staticmethod
 def generate_random_username():
     username = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
     try:
@@ -11,10 +13,12 @@ def generate_random_username():
         return username
 
 
+@staticmethod
 def generate_random_password():
     return User.objects.make_random_password(length=8, allowed_chars="abcdefghjkmnpqrstuvwxyz01234567889")
 
 
+@staticmethod
 def verify_firebase_id_token(firebase_id_token):
     try:
         from firebase_admin import auth
@@ -26,6 +30,7 @@ def verify_firebase_id_token(firebase_id_token):
     return uid
 
 
+@staticmethod
 def print_object(obj):
     from pprint import pprint
     pprint(vars(obj))

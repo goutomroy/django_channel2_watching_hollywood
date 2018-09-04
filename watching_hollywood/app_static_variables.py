@@ -9,6 +9,7 @@ MAX_CHAR_LENGTH = 2000
 MSG_SOMETHING_WENT_WRONG = 'Something went wrong.Please try again later.'
 MSG_NOT_AUTHENTICATED_USER = 'Not authenticated user.'
 MSG_NOT_ALL_PARAMETER = 'Not all required url parameter are provided.'
+MSG_NOT_ALL_KEYS = 'Not all required keys are in JSON payload.'
 
 # Types
 NOW_PLAYING = 'now_playing'
