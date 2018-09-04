@@ -1,10 +1,10 @@
 import os
 import requests
 from django.core.cache import cache
-
+from watching_hollywood.settings import CRED
 from main.models import Movie
 from watching_hollywood import celery_app
-from watching_hollywood.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, TMDB_BASE_URL, TMDB_API_KEY
+from watching_hollywood.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, TMDB_BASE_URL
 
 
 class BaseTask(celery_app.Task):
@@ -40,7 +40,7 @@ def data_builder(self):
 def pull_page(self, type, page):
 
     url = os.path.join(TMDB_BASE_URL, type)
-    payload = {'api_key': TMDB_API_KEY, 'page': page}
+    payload = {'api_key': CRED['tmdb_api_key'], 'page': page}
     r = requests.get(url, params=payload)
     response = r.json()
     movies = []

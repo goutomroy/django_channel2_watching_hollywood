@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+import json
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -25,7 +25,7 @@ SECRET_KEY = 'gwl-cmlew=q#=w(h=t_i2z#^df=hz#j*pom^#&pdlrsl%*9-1k'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '10.0.2.2']
+CRED = json.load(open('/etc/watching_hollywood/cred.json'))
 
 
 # Application definition
@@ -75,6 +75,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'watching_hollywood.wsgi.application'
 
+ALLOWED_HOSTS = CRED['allowed_hosts']
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
@@ -82,10 +83,10 @@ WSGI_APPLICATION = 'watching_hollywood.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'watching_hollywood',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
+        'NAME': CRED['db_name'],
+        'USER': CRED['db_user'],
+        'PASSWORD': CRED['db_password'],
+        'HOST': CRED['db_host'],
         'PORT': '5432',
     }
 }
@@ -126,6 +127,12 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 USE_TZ = True
+
+# Firebase Settings
+import firebase_admin
+from firebase_admin import credentials
+cred = credentials.Certificate(os.path.join(BASE_DIR, '/etc/watching_hollywood/firebase_admin_credencials.json'))
+firebase_app = firebase_admin.initialize_app(cred)
 
 
 # Static files (CSS, JavaScript, Images)

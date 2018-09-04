@@ -17,4 +17,3 @@ POPULAR = 'popular'
 
 # TMDB
 TMDB_BASE_URL = 'https://api.themoviedb.org/3/movie'
-TMDB_API_KEY = 'tmdb-api-key'
