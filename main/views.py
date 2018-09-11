@@ -57,8 +57,7 @@ class MainViewSet(viewsets.GenericViewSet):
         except Exception as exce:
             return Response({'success': False, 'message': MSG_SOMETHING_WENT_WRONG})
 
-    @action(methods=['post'],
-            detail=False)
+    @action(methods=['post'], detail=False)
     def sign_in(self, request):
         required_keys = (
             'firebase_id_token',
