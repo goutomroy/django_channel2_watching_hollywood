@@ -3,7 +3,7 @@ import json
 
 from django.core.cache import cache
 from channels.generic.http import AsyncHttpConsumer
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage, InvalidPage
 from nameparser import HumanName
 from rest_framework import status
 
@@ -266,6 +266,10 @@ class DataBuilderConsumer(AsyncHttpConsumer):
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        if not user.is_superuser:
+            data = json.dumps({'success': False, 'message': 'Need admin authentication to access this api!'}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         if self.scope['method'] != 'GET':
