@@ -1,7 +1,6 @@
 from channels.http import AsgiHandler
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.urls import path, re_path
-
 from main import consumers
 from utils.token_auth_middleware import TokenAuthMiddleware
 
