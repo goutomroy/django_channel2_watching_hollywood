@@ -134,14 +134,15 @@ class SignInConsumer(AsyncHttpConsumer):
 
 class WatchlistActionConsumer(AsyncHttpConsumer):
     async def handle(self, body):
-        user = self.scope['user']
-        if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         if self.scope['method'] != 'POST':
             data = json.dumps({'message': 'Request method is not allowed'}).encode()
             return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+
+        user = self.scope['user']
+        if not user.is_authenticated:
+            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
         required_keys = (
@@ -187,23 +188,23 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
 class WatchlistConsumer(AsyncHttpConsumer):
     async def handle(self, body):
 
-        from urllib.parse import parse_qs
-        params = json.dumps(parse_qs(self.scope['query_string'].decode()))
-        params = json.loads(params)
-        params = {k: v[0] for k, v in params.items()}
+        if self.scope['method'] != 'GET':
+            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
-        if self.scope['method'] != 'GET':
-            data = json.dumps({'message': 'Request method is not allowed'}).encode()
-            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
-
         required_keys = (
             'page',
         )
+
+        from urllib.parse import parse_qs
+        params = json.dumps(parse_qs(self.scope['query_string'].decode()))
+        params = json.loads(params)
+        params = {k: v[0] for k, v in params.items()}
 
         if not all(key in params for key in required_keys):
             data = json.dumps({'message': MSG_NOT_ALL_KEYS_IN_QUERY_PARAMS}).encode()
@@ -263,6 +264,10 @@ class WatchlistConsumer(AsyncHttpConsumer):
 class DataBuilderConsumer(AsyncHttpConsumer):
     async def handle(self, body):
 
+        if self.scope['method'] != 'GET':
+            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
@@ -270,15 +275,6 @@ class DataBuilderConsumer(AsyncHttpConsumer):
 
         if not user.is_superuser:
             data = json.dumps({'success': False, 'message': 'Need admin authentication to access this api!'}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
-
-        if self.scope['method'] != 'GET':
-            data = json.dumps({'message': 'Request method is not allowed'}).encode()
-            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
-
-        user_profile = await get_user_profile_by_user(user)
-        if user_profile is None:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         from main.tasks import data_builder
