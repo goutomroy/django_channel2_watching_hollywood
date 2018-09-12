@@ -1,12 +1,24 @@
+from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
 import random
 import string
 from django.core.cache import cache
 from firebase_admin import auth
 
+from main.models import UserProfile
+
 
 async def get_cache_movies(key):
     return cache.get(key)
+
+
+@database_sync_to_async
+def get_user_profile(user):
+    try:
+        user_profile = UserProfile.objects.get(user=user)
+        return user_profile
+    except UserProfile.DoesNotExist:
+        return None
 
 
 async def verify_firebase_id_token(firebase_id_token):

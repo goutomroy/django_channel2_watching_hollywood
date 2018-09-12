@@ -74,7 +74,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'watching_hollywood.wsgi.application'
 
 ALLOWED_HOSTS = CRED['allowed_hosts']
 ASGI_APPLICATION = 'watching_hollywood.routing.application'
@@ -87,6 +86,7 @@ CHANNEL_LAYERS = {
     },
 }
 
+WSGI_APPLICATION = 'watching_hollywood.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 

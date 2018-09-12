@@ -7,12 +7,11 @@ from django.core.cache import cache
 from channels.generic.http import AsyncHttpConsumer
 from nameparser import HumanName
 from rest_framework.authtoken.models import Token
-
 from main import app_static_methods
 from main.Serializers import MovieSerializer
-from main.app_static_methods import verify_firebase_id_token, get_raw_firebase_user
+from main.app_static_methods import verify_firebase_id_token, get_raw_firebase_user, get_user_profile
 from main.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, MSG_NOT_ALL_KEYS
-from main.models import UserProfile
+from main.models import UserProfile, Movie, Watchlist
 
 
 class NowPlayingConsumer(AsyncHttpConsumer):
@@ -165,3 +164,75 @@ class SignInConsumer(AsyncHttpConsumer):
     def get_or_create_token(self, user):
         token = Token.objects.get_or_create(user=user)
         return token
+
+
+class WatchlistActionConsumer(AsyncHttpConsumer):
+    async def handle(self, body):
+        user = self.scope['user']
+        if not user.is_authenticated:
+            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        if self.scope['method'] != 'POST':
+            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+
+        post_data = json.loads(body)
+        required_keys = (
+            'movie_id',
+            'action_type',
+        )
+
+        if not all(key in post_data for key in required_keys):
+            data = json.dumps({'message': MSG_NOT_ALL_KEYS}).encode()
+            return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
+
+        movie_id = post_data['movie_id']
+        action_type = int(post_data['action_type'])
+
+        movie = await self.is_movie_exists(movie_id)
+        if movie is None:
+            data = json.dumps({'success': False, 'message': 'Movie Not Found.'}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        user_profile = await get_user_profile(user)
+        if user_profile is None:
+            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        if action_type:
+
+            if await self.is_movie_in_watchlist(movie, user_profile):
+                data = {'success': True, 'message': 'already in Watchlist'}
+            else:
+                self.insert_in_watchlist(movie, user_profile)
+                data = {'success': True, 'message': 'added to watchlist'}
+        else:
+            if not await self.is_movie_in_watchlist(movie, user_profile):
+                data = {'success': True, 'message': 'already not in Watchlist'}
+            else:
+                await self.delete_from_watchlist(movie, user_profile)
+                data = {'success': True, 'message': 'removed from watchlist'}
+
+        data = json.dumps(data).encode()
+        return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+    @database_sync_to_async
+    def is_movie_exists(self, movie_id):
+        try:
+            movie = Movie.objects.get(id=movie_id)
+            return movie
+        except Movie.DoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def is_movie_in_watchlist(self, movie, user_profile):
+        return Watchlist.objects.filter(movie=movie, user_profile=user_profile).exists()
+
+    @database_sync_to_async
+    def insert_in_watchlist(self, movie, user_profile):
+        return Watchlist.objects.create(movie=movie, user_profile=user_profile)
+
+    @database_sync_to_async
+    def delete_from_watchlist(self, movie, user_profile):
+        return Watchlist.objects.delete(movie=movie, user_profile=user_profile)
