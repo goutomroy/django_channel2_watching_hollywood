@@ -8,6 +8,8 @@ All http apis are serving asynchronously using [Django Channel 2](https://channe
 I have two version of this project synchronous and asynchronous approach. Check branch `synchronous_version` for synchronous approach.
 
 #### Apis available
+Here I am using token authentication for `watchlist_action` and `watchlist` apis, for that I wrote a custom `TokenAuthMiddleware`.
+
 1. http://127.0.0.1:8000/api/now_playing/
 2. http://127.0.0.1:8000/api/upcoming/
 3. http://127.0.0.1:8000/api/popular/
