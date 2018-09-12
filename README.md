@@ -1,7 +1,7 @@
 # watching_hollywood
 
 This server pulls now playing, upcoming and popular movies from [TMDB](https://themoviedb.org) everyday at 5:00am UTC time using [celery](http://celeryproject.org).
-I am pulling 5 pages for every category and every page has 20 movies.
+I am pulling and caching 5 pages of every category and every page has 20 movies.Now playing, upcoming and popular apis are serving from cache.
 For authentication I found [firebase authentication](https://firebase.google.com/docs/auth/) interesting.
 Firebase has plug & play authentication library for android, ios and javascript.
 All http apis are serving asynchronously using [Django Channel 2](https://channels.readthedocs.io/en/latest/) with `AsyncHttpConsumer`.
