@@ -84,12 +84,13 @@ def insert_in_watchlist(movie, user_profile):
     return Watchlist.objects.create(movie=movie, user_profile=user_profile)
 
 
-async def get_cache_movies(key):
-    return cache.get(key)
-
 @database_sync_to_async
 def delete_from_watchlist(movie, user_profile):
     return Watchlist.objects.delete(movie=movie, user_profile=user_profile)
+
+
+async def get_cache_movies(key):
+    return cache.get(key)
 
 
 async def verify_firebase_id_token(firebase_id_token):
