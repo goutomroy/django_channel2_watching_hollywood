@@ -9,7 +9,8 @@ from nameparser import HumanName
 from rest_framework.authtoken.models import Token
 from main import app_static_methods
 from main.Serializers import MovieSerializer
-from main.app_static_methods import verify_firebase_id_token, get_raw_firebase_user, get_user_profile
+from main.app_static_methods import verify_firebase_id_token, get_raw_firebase_user, get_user_profile_by_user, \
+    delete_from_watchlist, is_movie_in_watchlist, insert_in_watchlist
 from main.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, MSG_NOT_ALL_KEYS
 from main.models import UserProfile, Movie, Watchlist
 
@@ -25,11 +26,11 @@ class NowPlayingConsumer(AsyncHttpConsumer):
             serializer = MovieSerializer(movies, many=True)
 
             data = json.dumps({'success': True, 'results': serializer.data}).encode()
-            await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
             data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
 
 class UpcomingConsumer(AsyncHttpConsumer):
@@ -195,44 +196,25 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
             data = json.dumps({'success': False, 'message': 'Movie Not Found.'}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
-        user_profile = await get_user_profile(user)
+        user_profile = await get_user_profile_by_user(user)
         if user_profile is None:
             data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         if action_type:
 
-            if await self.is_movie_in_watchlist(movie, user_profile):
+            if await is_movie_in_watchlist(movie, user_profile):
                 data = {'success': True, 'message': 'already in Watchlist'}
             else:
-                self.insert_in_watchlist(movie, user_profile)
+                insert_in_watchlist(movie, user_profile)
                 data = {'success': True, 'message': 'added to watchlist'}
         else:
-            if not await self.is_movie_in_watchlist(movie, user_profile):
+            if not await is_movie_in_watchlist(movie, user_profile):
                 data = {'success': True, 'message': 'already not in Watchlist'}
             else:
-                await self.delete_from_watchlist(movie, user_profile)
+                await delete_from_watchlist(movie, user_profile)
                 data = {'success': True, 'message': 'removed from watchlist'}
 
         data = json.dumps(data).encode()
         return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
-    @database_sync_to_async
-    def is_movie_exists(self, movie_id):
-        try:
-            movie = Movie.objects.get(id=movie_id)
-            return movie
-        except Movie.DoesNotExist:
-            return None
-
-    @database_sync_to_async
-    def is_movie_in_watchlist(self, movie, user_profile):
-        return Watchlist.objects.filter(movie=movie, user_profile=user_profile).exists()
-
-    @database_sync_to_async
-    def insert_in_watchlist(self, movie, user_profile):
-        return Watchlist.objects.create(movie=movie, user_profile=user_profile)
-
-    @database_sync_to_async
-    def delete_from_watchlist(self, movie, user_profile):
-        return Watchlist.objects.delete(movie=movie, user_profile=user_profile)
