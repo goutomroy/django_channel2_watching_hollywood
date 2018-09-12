@@ -18,45 +18,6 @@ from main.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, MSG_SOMETH
 
 class MainViewSet(viewsets.GenericViewSet):
 
-    @action(methods=['get'], permission_classes=[AllowAny], detail=False)
-    def now_playing(self, request):
-
-        try:
-            movies = []
-            for page in range(1, 6):
-                movies.extend(cache.get(NOW_PLAYING+'_'+str(page)))
-            serializer = MovieSerializer(movies, many=True)
-            return Response({'success': True, 'results': serializer.data})
-
-        except Exception as exce:
-            return Response({'success': False, 'message': MSG_SOMETHING_WENT_WRONG})
-
-    @action(methods=['get'], permission_classes=[AllowAny], detail=False)
-    def upcoming(self, request):
-
-        try:
-            movies = []
-            for page in range(1, 6):
-                movies.extend(cache.get(UPCOMING+'_'+str(page)))
-            serializer = MovieSerializer(movies, many=True)
-            return Response({'success': True, 'results': serializer.data})
-
-        except Exception as exce:
-            return Response({'success': False, 'message': MSG_SOMETHING_WENT_WRONG})
-
-    @action(methods=['get'], permission_classes=[AllowAny], detail=False)
-    def popular(self, request):
-
-        try:
-            movies = []
-            for page in range(1, 6):
-                movies.extend(cache.get(POPULAR+'_'+str(page)))
-            serializer = MovieSerializer(movies, many=True)
-            return Response({'success': True, 'results': serializer.data})
-
-        except Exception as exce:
-            return Response({'success': False, 'message': MSG_SOMETHING_WENT_WRONG})
-
     @action(methods=['post'], detail=False)
     def sign_in(self, request):
         required_keys = (

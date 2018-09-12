@@ -1,6 +1,26 @@
 from django.contrib.auth.models import User
 import random
 import string
+from django.core.cache import cache
+from firebase_admin import auth
+
+
+async def get_cache_movies(key):
+    return cache.get(key)
+
+
+async def verify_firebase_id_token(firebase_id_token):
+    try:
+        from firebase_admin import auth
+        decoded_token = auth.verify_id_token(firebase_id_token)
+        uid = decoded_token['uid']
+    except Exception as exec:
+        return None
+    return uid
+
+
+async def get_raw_firebase_user(firebase_uid):
+    return auth.get_user(firebase_uid)
 
 
 @staticmethod
@@ -16,18 +36,6 @@ def generate_random_username():
 @staticmethod
 def generate_random_password():
     return User.objects.make_random_password(length=8, allowed_chars="abcdefghjkmnpqrstuvwxyz01234567889")
-
-
-@staticmethod
-def verify_firebase_id_token(firebase_id_token):
-    try:
-        from firebase_admin import auth
-        decoded_token = auth.verify_id_token(firebase_id_token)
-        uid = decoded_token['uid']
-    except Exception as exec:
-        print(exec)
-        return None
-    return uid
 
 
 @staticmethod

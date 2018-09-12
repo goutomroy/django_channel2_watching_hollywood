@@ -31,6 +31,7 @@ CRED = json.load(open('/etc/watching_hollywood/cred.json'))
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -76,6 +77,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'watching_hollywood.wsgi.application'
 
 ALLOWED_HOSTS = CRED['allowed_hosts']
+ASGI_APPLICATION = 'watching_hollywood.routing.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
