@@ -4,8 +4,52 @@ import random
 import string
 from django.core.cache import cache
 from firebase_admin import auth
+from rest_framework.authtoken.models import Token
 
 from main.models import UserProfile, Movie, Watchlist
+
+
+@database_sync_to_async
+def create_new_user(first_name, last_name, username, email, password):
+    return User.objects.create_user(first_name=first_name,
+                                    last_name=last_name,
+                                    username=username,
+                                    email=email,
+                                    password=password)
+
+
+@database_sync_to_async
+def is_user_profile_exists_by_firebase_uid(firebase_uid):
+    return UserProfile.objects.filter(firebase_uid=firebase_uid).exists()
+
+
+@database_sync_to_async
+def create_user_profile(user, firebase_uid):
+    return UserProfile.objects.create(user=user, firebase_uid=firebase_uid)
+
+
+@database_sync_to_async
+def get_user_profile_by_firebase_uid(firebase_uid):
+    try:
+        user_profile = UserProfile.objects.get(firebase_uid=firebase_uid)
+        return user_profile
+    except UserProfile.DoesNotExist:
+        return None
+
+
+@database_sync_to_async
+def get_user_by_email(email):
+    try:
+        user = User.objects.get(email__iexact=email)
+        return user
+    except User.DoesNotExist:
+        return None
+
+
+@database_sync_to_async
+def get_or_create_token(user):
+    token = Token.objects.get_or_create(user=user)
+    return token
 
 
 @database_sync_to_async
