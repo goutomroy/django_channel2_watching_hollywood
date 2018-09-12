@@ -5,7 +5,7 @@ I am pulling 5 pages for every category and every page has 20 movies.
 For authentication I found [firebase authentication](https://firebase.google.com/docs/auth/) interesting.
 Firebase has plug & play authentication library for android, ios and javascript.
 All http apis are serving asynchronously using [Django Channel 2](https://channels.readthedocs.io/en/latest/) with **AsyncHttpConsumer**.
-I have two version of this project synchronous and asynchronous approach. Check branch **synchronous_version**.
+I have two version of this project synchronous and asynchronous approach. Check branch `synchronous_version`.
 
 #### Technology Used
 1. celery==4.2.1
