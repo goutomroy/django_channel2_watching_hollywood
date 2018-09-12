@@ -29,6 +29,9 @@ I have two version of this project synchronous and asynchronous approach. Check 
 For scheduling task I am using `django-celery-beat`, it has admin interface to add/remove scheduling tasks. Just try to make beat checking loop `beat_max_loop_interval` to maximum you can to reduce db interactions, my one is 600 seconds.
 For task result using `django-celery-results`. I used [flower](https://flower.readthedocs.io/en/latest/) before but found difficulties when using it in production.
 
+#### Android app consuming these apis
+Coming Soon!
+
 #### Start development server
 ```
 python3.6 manage.py runserver
