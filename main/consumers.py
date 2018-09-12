@@ -1,17 +1,20 @@
-import asyncio
 import json
 
-from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
+
 from django.core.cache import cache
 from channels.generic.http import AsyncHttpConsumer
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from nameparser import HumanName
-from main import app_static_methods
+from rest_framework import status
+
+from utils import app_methods
 from main.Serializers import MovieSerializer
-from main.app_static_methods import verify_firebase_id_token, get_raw_firebase_user, get_user_profile_by_user, \
+from utils.app_methods import verify_firebase_id_token, get_raw_firebase_user, get_user_profile_by_user, \
     delete_from_watchlist, is_movie_in_watchlist, insert_in_watchlist, get_user_profile_by_firebase_uid, \
-    create_user_profile, create_new_user, is_user_profile_exists_by_firebase_uid, get_user_by_email, get_or_create_token
-from main.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, MSG_NOT_ALL_KEYS
+    create_user_profile, create_new_user, is_user_profile_exists_by_firebase_uid, get_user_by_email, \
+    get_or_create_token, is_movie_exists, get_my_watchlist
+from utils.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, MSG_NOT_ALL_KEYS, \
+    MSG_NOT_ALL_KEYS_IN_QUERY_PARAMS
 
 
 class NowPlayingConsumer(AsyncHttpConsumer):
@@ -99,8 +102,8 @@ class SignInConsumer(AsyncHttpConsumer):
                 user = await get_user_by_email(raw_firebase_user.email)
                 if user is None:
                     name = HumanName(raw_firebase_user.display_name)
-                    username = app_static_methods.generate_random_username()
-                    pass_word = app_static_methods.generate_random_password()
+                    username = app_methods.generate_random_username()
+                    pass_word = app_methods.generate_random_password()
                     user = await create_new_user(name.first,
                                          (name.middle + ' ' + name.last).strip(),
                                          username,
@@ -153,7 +156,7 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
         movie_id = post_data['movie_id']
         action_type = int(post_data['action_type'])
 
-        movie = await self.is_movie_exists(movie_id)
+        movie = await is_movie_exists(movie_id)
         if movie is None:
             data = json.dumps({'success': False, 'message': 'Movie Not Found.'}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
@@ -179,4 +182,104 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
 
         data = json.dumps(data).encode()
         return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+
+class WatchlistConsumer(AsyncHttpConsumer):
+    async def handle(self, body):
+
+        from urllib.parse import parse_qs
+        params = json.dumps(parse_qs(self.scope['query_string'].decode()))
+        params = json.loads(params)
+        params = {k: v[0] for k, v in params.items()}
+
+        user = self.scope['user']
+        if not user.is_authenticated:
+            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        if self.scope['method'] != 'GET':
+            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+
+        required_keys = (
+            'page',
+        )
+
+        if not all(key in params for key in required_keys):
+            data = json.dumps({'message': MSG_NOT_ALL_KEYS_IN_QUERY_PARAMS}).encode()
+            return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
+
+        page = params['page']
+
+        user_profile = await get_user_profile_by_user(user)
+        if user_profile is None:
+            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        my_watchlist = await get_my_watchlist(user_profile)
+
+        data = {}
+        items_in_a_page = 10
+        paginator = Paginator(my_watchlist, items_in_a_page)
+        data['total_results'] = paginator.count
+        data['total_pages'] = paginator.num_pages
+        data['page'] = page
+
+        try:
+            movie_page = paginator.page(page)
+
+            if movie_page.has_previous():
+                data['previous'] = movie_page.previous_page_number()
+            else:
+                # means page=1
+                data['previous'] = None
+
+            if movie_page.has_next():
+                data['next'] = movie_page.next_page_number()
+            else:
+                # means page=number_pages
+                data['next'] = None
+
+            mvs = []
+            for each in movie_page.object_list:
+                serializer = MovieSerializer(each.movie)
+                mvs.append(serializer.data)
+
+            data['results'] = mvs
+            data['success'] = True
+
+            data = json.dumps(data).encode()
+            return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
+
+        except PageNotAnInteger:
+            data = json.dumps({'success': False, 'message': 'PageNotAnInteger !'}).encode()
+            return await self.send_response(status.HTTP_400_BAD_REQUEST, data, headers=[("Content-Type", "application/json")])
+
+        except EmptyPage:
+            data = json.dumps({'success': False, 'message': 'EmptyPage ! No items inserted yet!'}).encode()
+            return await self.send_response(status.HTTP_204_NO_CONTENT, data, headers=[("Content-Type", "application/json")])
+
+
+class DataBuilderConsumer(AsyncHttpConsumer):
+    async def handle(self, body):
+
+        user = self.scope['user']
+        if not user.is_authenticated:
+            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        if self.scope['method'] != 'GET':
+            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+
+        user_profile = await get_user_profile_by_user(user)
+        if user_profile is None:
+            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
+            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
+        from main.tasks import data_builder
+        data_builder.apply_async()
+        data = json.dumps({'success': True, 'message': 'ok'}).encode()
+        return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+
 

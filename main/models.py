@@ -1,7 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.contrib.auth.models import User
-from main.app_static_variables import MEDIUM_CHAR_LENGTH
+from utils.app_static_variables import MEDIUM_CHAR_LENGTH
 
 
 class UserProfile(models.Model):
@@ -44,4 +44,4 @@ class Watchlist(models.Model):
         ordering = ('-created',)
 
     def __str__(self):
-        return self.movie
+        return str(self.movie.tmdb_id)

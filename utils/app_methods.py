@@ -5,7 +5,6 @@ import string
 from django.core.cache import cache
 from firebase_admin import auth
 from rest_framework.authtoken.models import Token
-
 from main.models import UserProfile, Movie, Watchlist
 
 
@@ -26,6 +25,11 @@ def is_user_profile_exists_by_firebase_uid(firebase_uid):
 @database_sync_to_async
 def create_user_profile(user, firebase_uid):
     return UserProfile.objects.create(user=user, firebase_uid=firebase_uid)
+
+
+@database_sync_to_async
+def get_my_watchlist(user_profile):
+    return Watchlist.objects.filter(user_profile=user_profile).order_by('-created')
 
 
 @database_sync_to_async

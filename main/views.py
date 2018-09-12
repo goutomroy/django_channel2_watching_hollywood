@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from firebase_admin import auth
 from nameparser import HumanName
@@ -7,12 +6,12 @@ from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from main.Serializers import MovieSerializer, WatchlistSerializer
+from main.Serializers import WatchlistSerializer
 from main.models import UserProfile, Movie, Watchlist
-from main import app_static_methods
-from main.app_static_variables import NOW_PLAYING, UPCOMING, POPULAR, MSG_SOMETHING_WENT_WRONG, \
+from utils import app_methods
+from utils.app_static_variables import MSG_SOMETHING_WENT_WRONG, \
     MSG_NOT_ALL_KEYS
 
 
@@ -31,7 +30,7 @@ class MainViewSet(viewsets.GenericViewSet):
 
         try:
 
-            firebase_uid = app_static_methods.verify_firebase_id_token(firebase_id_token)
+            firebase_uid = app_methods.verify_firebase_id_token(firebase_id_token)
 
             if firebase_uid is None:
                 return Response({'success': False, 'message': 'Invalid firebase id_token'})
@@ -41,9 +40,9 @@ class MainViewSet(viewsets.GenericViewSet):
                 raw_firebase_user = auth.get_user(firebase_uid)
 
                 if not User.objects.filter(email__iexact=raw_firebase_user.email).exists():
-                    user = User.objects.create_user(username=app_static_methods.generate_random_username(),
+                    user = User.objects.create_user(username=app_methods.generate_random_username(),
                                                     email=raw_firebase_user.email,
-                                                    password=app_static_methods.generate_random_password())
+                                                    password=app_methods.generate_random_password())
 
                     name = HumanName(raw_firebase_user.display_name)
                     user.first_name = name.first
