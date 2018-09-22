@@ -142,7 +142,7 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
         required_keys = (
@@ -215,7 +215,7 @@ class WatchlistConsumer(AsyncHttpConsumer):
         user_profile = await get_user_profile_by_user(user)
         if user_profile is None:
             data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         my_watchlist = await get_my_watchlist(user_profile)
 
@@ -271,11 +271,11 @@ class DataBuilderConsumer(AsyncHttpConsumer):
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         if not user.is_superuser:
             data = json.dumps({'success': False, 'message': 'Need admin authentication to access this api!'}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(403, data, headers=[("Content-Type", "application/json")])
 
         from main.tasks import data_builder
         data_builder.apply_async()
