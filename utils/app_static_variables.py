@@ -7,10 +7,12 @@ MAX_CHAR_LENGTH = 2000
 
 # message
 MSG_SOMETHING_WENT_WRONG = 'Something went wrong.Please try again later.'
-MSG_NOT_AUTHENTICATED_USER = 'Not authenticated user.'
-MSG_NOT_ALL_PARAMETER = 'Not all required url parameter are provided.'
-MSG_NOT_ALL_KEYS = 'Bad request! Not all required keys are in JSON payload.'
-MSG_NOT_ALL_KEYS_IN_QUERY_PARAMS = 'Bad request! Not all required keys are in query params.'
+
+MSG_400 = 'Bad Request'
+MSG_401 = 'Invalid token'
+MSG_403 = 'You do not have permission to perform this action.'
+MSG_405 = 'Request method is not allowed'
+
 
 # Types
 NOW_PLAYING = 'now_playing'

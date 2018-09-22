@@ -13,8 +13,8 @@ from utils.app_methods import verify_firebase_id_token, get_raw_firebase_user, g
     delete_from_watchlist, is_movie_in_watchlist, insert_in_watchlist, get_user_profile_by_firebase_uid, \
     create_user_profile, create_new_user, is_user_profile_exists_by_firebase_uid, get_user_by_email, \
     get_or_create_token, is_movie_exists, get_my_watchlist
-from utils.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, MSG_NOT_ALL_KEYS, \
-    MSG_NOT_ALL_KEYS_IN_QUERY_PARAMS
+from utils.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, \
+    MSG_403, MSG_401, MSG_405, MSG_400
 
 
 class NowPlayingConsumer(AsyncHttpConsumer):
@@ -74,7 +74,7 @@ class SignInConsumer(AsyncHttpConsumer):
     async def handle(self, body):
 
         if self.scope['method'] != 'POST':
-            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            data = json.dumps({'message': MSG_405}).encode()
             return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
@@ -83,7 +83,7 @@ class SignInConsumer(AsyncHttpConsumer):
         )
 
         if not all(key in post_data for key in required_keys):
-            data = json.dumps({'message': MSG_NOT_ALL_KEYS}).encode()
+            data = json.dumps({'message': MSG_400}).encode()
             return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
 
         firebase_id_token = post_data['firebase_id_token']
@@ -136,12 +136,12 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
     async def handle(self, body):
 
         if self.scope['method'] != 'POST':
-            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            data = json.dumps({'message': MSG_405}).encode()
             return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            data = json.dumps({'success': False, 'message': MSG_401}).encode()
             return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
@@ -151,7 +151,7 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
         )
 
         if not all(key in post_data for key in required_keys):
-            data = json.dumps({'message': MSG_NOT_ALL_KEYS}).encode()
+            data = json.dumps({'message': MSG_400}).encode()
             return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
 
         movie_id = post_data['movie_id']
@@ -189,12 +189,12 @@ class WatchlistConsumer(AsyncHttpConsumer):
     async def handle(self, body):
 
         if self.scope['method'] != 'GET':
-            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            data = json.dumps({'message': MSG_405}).encode()
             return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            data = json.dumps({'success': False, 'message': MSG_401}).encode()
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         required_keys = (
@@ -207,7 +207,7 @@ class WatchlistConsumer(AsyncHttpConsumer):
         params = {k: v[0] for k, v in params.items()}
 
         if not all(key in params for key in required_keys):
-            data = json.dumps({'message': MSG_NOT_ALL_KEYS_IN_QUERY_PARAMS}).encode()
+            data = json.dumps({'message': MSG_400}).encode()
             return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
 
         page = params['page']
@@ -265,16 +265,16 @@ class DataBuilderConsumer(AsyncHttpConsumer):
     async def handle(self, body):
 
         if self.scope['method'] != 'GET':
-            data = json.dumps({'message': 'Request method is not allowed'}).encode()
+            data = json.dumps({'message': MSG_405}).encode()
             return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': 'Authentication failed!'}).encode()
+            data = json.dumps({'success': False, 'message': MSG_401}).encode()
             return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         if not user.is_superuser:
-            data = json.dumps({'success': False, 'message': 'Need admin authentication to access this api!'}).encode()
+            data = json.dumps({'success': False, 'message': MSG_403}).encode()
             return await self.send_response(403, data, headers=[("Content-Type", "application/json")])
 
         from main.tasks import data_builder
