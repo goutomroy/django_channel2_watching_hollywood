@@ -7,6 +7,9 @@ Firebase has plug & play authentication library for android, ios and javascript.
 All http apis are serving asynchronously using [Django Channel 2](https://channels.readthedocs.io/en/latest/) with `AsyncHttpConsumer`.
 I have two version of this project synchronous and asynchronous approach. Check branch `synchronous_version` for synchronous approach.
 
+#### Apis Markdown Documentation
+[Check github link](https://github.com/goutomroy/watching_hollywood_api_doc_md)
+
 #### Apis available
 Here I am using token authentication for `watchlist_action` and `watchlist` apis, for that I wrote a custom `TokenAuthMiddleware`.
 

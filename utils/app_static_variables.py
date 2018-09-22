@@ -5,7 +5,7 @@ SMALL_CHAR_LENGTH = 50
 MEDIUM_CHAR_LENGTH = 500
 MAX_CHAR_LENGTH = 2000
 
-# message
+# messages
 MSG_400 = 'Bad Request'
 MSG_401 = 'Invalid token'
 MSG_403 = 'You do not have permission to perform this action.'
