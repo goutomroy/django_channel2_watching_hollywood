@@ -13,7 +13,7 @@ from utils.app_methods import verify_firebase_id_token, get_raw_firebase_user, g
     delete_from_watchlist, is_movie_in_watchlist, insert_in_watchlist, get_user_profile_by_firebase_uid, \
     create_user_profile, create_new_user, is_user_profile_exists_by_firebase_uid, get_user_by_email, \
     get_or_create_token, is_movie_exists, get_my_watchlist
-from utils.app_static_variables import MSG_SOMETHING_WENT_WRONG, NOW_PLAYING, UPCOMING, POPULAR, \
+from utils.app_static_variables import MSG_500, NOW_PLAYING, UPCOMING, POPULAR, \
     MSG_403, MSG_401, MSG_405, MSG_400
 
 
@@ -31,8 +31,8 @@ class NowPlayingConsumer(AsyncHttpConsumer):
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_500}).encode()
+            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
 
 class UpcomingConsumer(AsyncHttpConsumer):
@@ -49,8 +49,8 @@ class UpcomingConsumer(AsyncHttpConsumer):
             await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_500}).encode()
+            await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
 
 class PopularConsumer(AsyncHttpConsumer):
@@ -66,8 +66,8 @@ class PopularConsumer(AsyncHttpConsumer):
             return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_500}).encode()
+            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
 
 class SignInConsumer(AsyncHttpConsumer):
@@ -93,8 +93,8 @@ class SignInConsumer(AsyncHttpConsumer):
             firebase_uid = await verify_firebase_id_token(firebase_id_token)
 
             if firebase_uid is None:
-                data = json.dumps({'success': False, 'message': 'Invalid firebase id_token'}).encode()
-                return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+                data = json.dumps({'message': MSG_401}).encode()
+                return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
             if not await is_user_profile_exists_by_firebase_uid(firebase_uid):
 
@@ -115,20 +115,16 @@ class SignInConsumer(AsyncHttpConsumer):
             else:
                 user_profile = await get_user_profile_by_firebase_uid(firebase_uid)
                 if user_profile is None:
-                    data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-                    return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+                    data = json.dumps({'message': MSG_500}).encode()
+                    return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_500}).encode()
+            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
         token = await get_or_create_token(user_profile.user)
 
-        data = {
-            'api_key': token.key,
-        }
-
-        data = json.dumps({'success': True, 'details': {'basic': data}}).encode()
+        data = json.dumps({'success': True, 'api_key': token.key}).encode()
         return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
 
 
@@ -141,7 +137,7 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
 
         user = self.scope['user']
         if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': MSG_401}).encode()
+            data = json.dumps({'message': MSG_401}).encode()
             return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
@@ -164,22 +160,22 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
 
         user_profile = await get_user_profile_by_user(user)
         if user_profile is None:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_500}).encode()
+            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
         if action_type:
 
             if await is_movie_in_watchlist(movie, user_profile):
-                data = {'success': True, 'message': 'already in Watchlist'}
+                data = {'success': True, 'message': 'Already in Watchlist'}
             else:
                 insert_in_watchlist(movie, user_profile)
-                data = {'success': True, 'message': 'added to watchlist'}
+                data = {'success': True, 'message': 'Added to watchlist'}
         else:
             if not await is_movie_in_watchlist(movie, user_profile):
-                data = {'success': True, 'message': 'already not in Watchlist'}
+                data = {'success': True, 'message': 'Not in Watchlist to remove'}
             else:
                 await delete_from_watchlist(movie, user_profile)
-                data = {'success': True, 'message': 'removed from watchlist'}
+                data = {'success': True, 'message': 'Removed from watchlist'}
 
         data = json.dumps(data).encode()
         return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
@@ -194,8 +190,8 @@ class WatchlistConsumer(AsyncHttpConsumer):
 
         user = self.scope['user']
         if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': MSG_401}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_401}).encode()
+            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         required_keys = (
             'page',
@@ -214,8 +210,8 @@ class WatchlistConsumer(AsyncHttpConsumer):
 
         user_profile = await get_user_profile_by_user(user)
         if user_profile is None:
-            data = json.dumps({'success': False, 'message': MSG_SOMETHING_WENT_WRONG}).encode()
-            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
+            data = json.dumps({'message': MSG_500}).encode()
+            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
 
         my_watchlist = await get_my_watchlist(user_profile)
 
@@ -270,11 +266,11 @@ class DataBuilderConsumer(AsyncHttpConsumer):
 
         user = self.scope['user']
         if not user.is_authenticated:
-            data = json.dumps({'success': False, 'message': MSG_401}).encode()
+            data = json.dumps({'message': MSG_401}).encode()
             return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
 
         if not user.is_superuser:
-            data = json.dumps({'success': False, 'message': MSG_403}).encode()
+            data = json.dumps({'message': MSG_403}).encode()
             return await self.send_response(403, data, headers=[("Content-Type", "application/json")])
 
         from main.tasks import data_builder

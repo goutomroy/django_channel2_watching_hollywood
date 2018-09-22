@@ -6,13 +6,11 @@ MEDIUM_CHAR_LENGTH = 500
 MAX_CHAR_LENGTH = 2000
 
 # message
-MSG_SOMETHING_WENT_WRONG = 'Something went wrong.Please try again later.'
-
 MSG_400 = 'Bad Request'
 MSG_401 = 'Invalid token'
 MSG_403 = 'You do not have permission to perform this action.'
 MSG_405 = 'Request method is not allowed'
-
+MSG_500 = 'Server error'
 
 # Types
 NOW_PLAYING = 'now_playing'
