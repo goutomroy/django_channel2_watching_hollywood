@@ -130,7 +130,6 @@ class SignInConsumer(AsyncHttpConsumer):
 
 class WatchlistActionConsumer(AsyncHttpConsumer):
     async def handle(self, body):
-
         if self.scope['method'] != 'POST':
             data = json.dumps({'message': MSG_405}).encode()
             return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
