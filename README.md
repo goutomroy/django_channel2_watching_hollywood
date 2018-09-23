@@ -42,6 +42,11 @@ Coming Soon!
 python3.6 manage.py runserver
 ```
 
+#### Start testing
+```
+python3.6 manage.py test
+```
+
 #### Start development Celery
 ```
 celery -A watching_hollywood worker -B  -l info
