@@ -1,12 +1,9 @@
 import json
-
-
 from django.core.cache import cache
 from channels.generic.http import AsyncHttpConsumer
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage, InvalidPage
 from nameparser import HumanName
 from rest_framework import status
-
 from utils import app_methods
 from main.Serializers import MovieSerializer
 from utils.app_methods import verify_firebase_id_token, get_raw_firebase_user, get_user_profile_by_user, \
@@ -28,11 +25,11 @@ class NowPlayingConsumer(AsyncHttpConsumer):
             serializer = MovieSerializer(movies, many=True)
 
             data = json.dumps({'success': True, 'results': serializer.data}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
             data = json.dumps({'message': MSG_500}).encode()
-            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
 
 class UpcomingConsumer(AsyncHttpConsumer):
@@ -46,11 +43,11 @@ class UpcomingConsumer(AsyncHttpConsumer):
             serializer = MovieSerializer(movies, many=True)
 
             data = json.dumps({'success': True, 'results': serializer.data}).encode()
-            await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
             data = json.dumps({'message': MSG_500}).encode()
-            await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+            await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
 
 class PopularConsumer(AsyncHttpConsumer):
@@ -63,11 +60,11 @@ class PopularConsumer(AsyncHttpConsumer):
             serializer = MovieSerializer(movies, many=True)
 
             data = json.dumps({'success': True, 'results': serializer.data}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
             data = json.dumps({'message': MSG_500}).encode()
-            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
 
 class SignInConsumer(AsyncHttpConsumer):
@@ -75,7 +72,7 @@ class SignInConsumer(AsyncHttpConsumer):
 
         if self.scope['method'] != 'POST':
             data = json.dumps({'message': MSG_405}).encode()
-            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_405_METHOD_NOT_ALLOWED, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
         required_keys = (
@@ -84,7 +81,7 @@ class SignInConsumer(AsyncHttpConsumer):
 
         if not all(key in post_data for key in required_keys):
             data = json.dumps({'message': MSG_400}).encode()
-            return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_400_BAD_REQUEST, data, headers=[("Content-Type", "application/json")])
 
         firebase_id_token = post_data['firebase_id_token']
 
@@ -94,7 +91,7 @@ class SignInConsumer(AsyncHttpConsumer):
 
             if firebase_uid is None:
                 data = json.dumps({'message': MSG_401}).encode()
-                return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
+                return await self.send_response(status.HTTP_401_UNAUTHORIZED, data, headers=[("Content-Type", "application/json")])
 
             if not await is_user_profile_exists_by_firebase_uid(firebase_uid):
 
@@ -116,28 +113,28 @@ class SignInConsumer(AsyncHttpConsumer):
                 user_profile = await get_user_profile_by_firebase_uid(firebase_uid)
                 if user_profile is None:
                     data = json.dumps({'message': MSG_500}).encode()
-                    return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+                    return await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
         except Exception as exce:
             data = json.dumps({'message': MSG_500}).encode()
-            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
         token = await get_or_create_token(user_profile.user)
 
         data = json.dumps({'success': True, 'api_key': token.key}).encode()
-        return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+        return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
 
 class WatchlistActionConsumer(AsyncHttpConsumer):
     async def handle(self, body):
         if self.scope['method'] != 'POST':
             data = json.dumps({'message': MSG_405}).encode()
-            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_405_METHOD_NOT_ALLOWED, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'message': MSG_401}).encode()
-            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_401_UNAUTHORIZED, data, headers=[("Content-Type", "application/json")])
 
         post_data = json.loads(body)
         required_keys = (
@@ -147,7 +144,7 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
 
         if not all(key in post_data for key in required_keys):
             data = json.dumps({'message': MSG_400}).encode()
-            return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_400_BAD_REQUEST, data, headers=[("Content-Type", "application/json")])
 
         movie_id = post_data['movie_id']
         action_type = int(post_data['action_type'])
@@ -155,12 +152,12 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
         movie = await is_movie_exists(movie_id)
         if movie is None:
             data = json.dumps({'success': False, 'message': 'Movie Not Found.'}).encode()
-            return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
         user_profile = await get_user_profile_by_user(user)
         if user_profile is None:
             data = json.dumps({'message': MSG_500}).encode()
-            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
         if action_type:
 
@@ -177,7 +174,7 @@ class WatchlistActionConsumer(AsyncHttpConsumer):
                 data = {'success': True, 'message': 'Removed from watchlist'}
 
         data = json.dumps(data).encode()
-        return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+        return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
 
 class WatchlistConsumer(AsyncHttpConsumer):
@@ -185,12 +182,12 @@ class WatchlistConsumer(AsyncHttpConsumer):
 
         if self.scope['method'] != 'GET':
             data = json.dumps({'message': MSG_405}).encode()
-            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_405_METHOD_NOT_ALLOWED, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'message': MSG_401}).encode()
-            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_401_UNAUTHORIZED, data, headers=[("Content-Type", "application/json")])
 
         required_keys = (
             'page',
@@ -203,14 +200,14 @@ class WatchlistConsumer(AsyncHttpConsumer):
 
         if not all(key in params for key in required_keys):
             data = json.dumps({'message': MSG_400}).encode()
-            return await self.send_response(400, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_400_BAD_REQUEST, data, headers=[("Content-Type", "application/json")])
 
         page = params['page']
 
         user_profile = await get_user_profile_by_user(user)
         if user_profile is None:
             data = json.dumps({'message': MSG_500}).encode()
-            return await self.send_response(500, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_500_INTERNAL_SERVER_ERROR, data, headers=[("Content-Type", "application/json")])
 
         my_watchlist = await get_my_watchlist(user_profile)
 
@@ -261,20 +258,20 @@ class DataBuilderConsumer(AsyncHttpConsumer):
 
         if self.scope['method'] != 'GET':
             data = json.dumps({'message': MSG_405}).encode()
-            return await self.send_response(405, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_405, data, headers=[("Content-Type", "application/json")])
 
         user = self.scope['user']
         if not user.is_authenticated:
             data = json.dumps({'message': MSG_401}).encode()
-            return await self.send_response(401, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_401_UNAUTHORIZED, data, headers=[("Content-Type", "application/json")])
 
         if not user.is_superuser:
             data = json.dumps({'message': MSG_403}).encode()
-            return await self.send_response(403, data, headers=[("Content-Type", "application/json")])
+            return await self.send_response(status.HTTP_403_FORBIDDEN, data, headers=[("Content-Type", "application/json")])
 
         from main.tasks import data_builder
         data_builder.apply_async()
         data = json.dumps({'success': True, 'message': 'ok'}).encode()
-        return await self.send_response(200, data, headers=[("Content-Type", "application/json")])
+        return await self.send_response(status.HTTP_200_OK, data, headers=[("Content-Type", "application/json")])
 
 
