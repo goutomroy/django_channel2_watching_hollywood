@@ -8,7 +8,7 @@ Automat==0.7.0
 billiard==3.5.0.4
 CacheControl==0.12.5
 cachetools==2.1.0
-celery==4.2.1
+celery==5.2.2
 certifi==2018.8.24
 channels==2.1.3
 channels-redis==2.3.0
